@@ -156,3 +156,35 @@ resource "aws_instance" "nextwork_public_server" {
     Name = "NextWork Public Server"
   }
 }
+
+resource "aws_security_group" "nextwork_private_security_group" {
+  name        = "NextWork Private Security Group"
+  vpc_id      = aws_vpc.nextwork_vpc.id
+  description = "Security group for NextWork Private Subnet."
+
+  tags = {
+    Name = "NextWork Private Security Group"
+  }
+
+}
+
+resource "aws_instance" "nextwork_private_server" {
+  ami                    = data.aws_ami.amazon_linux_2.id
+  instance_type          = "t3.micro"
+  key_name               = aws_key_pair.ec2_key_pair.key_name
+  vpc_security_group_ids = [aws_security_group.nextwork_private_security_group.id]
+  subnet_id              = aws_subnet.network_private_subnet_1.id
+
+  tags = {
+    Name = "NextWork Private Server"
+  }
+}
+
+resource "aws_security_group_rule" "allow_ssh_from_public_sg" {
+  type                     = "ingress"
+  protocol                 = "tcp"
+  from_port                = 22
+  to_port                  = 22
+  security_group_id        = aws_security_group.nextwork_private_security_group.id
+  source_security_group_id = aws_security_group.nextwork_public_security_group.id
+}
