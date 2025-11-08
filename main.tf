@@ -38,7 +38,7 @@ resource "aws_default_route_table" "nextwork_vpc" {
   }
 
   tags = {
-    Name = "NextWork route table"
+    Name = "NextWork Public Route table"
   }
 }
 
@@ -99,3 +99,12 @@ resource "aws_subnet" "network_private_subnet_1" {
     Name = "NextWork Private Subnet"
   }
 }
+
+resource "aws_route_table" "network_private_route_table" {
+  vpc_id = aws_vpc.nextwork_vpc.id
+
+  tags = {
+    Name = "NextWork Private Route Table"
+  }
+}
+
