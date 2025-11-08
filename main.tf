@@ -16,7 +16,7 @@ resource "aws_subnet" "nextwork_public_subnet_1" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name : "Public 1"
+    Name : "NextWork Public Subnet"
   }
 }
 
@@ -88,5 +88,14 @@ resource "aws_default_network_acl" "nextwork_public_subnet_1" {
 
   tags = {
     Name = "NextWork Network ACL"
+  }
+}
+
+resource "aws_subnet" "network_private_subnet_1" {
+  vpc_id     = aws_vpc.nextwork_vpc.id
+  cidr_block = "10.0.1.0/24"
+
+  tags = {
+    Name = "NextWork Private Subnet"
   }
 }
