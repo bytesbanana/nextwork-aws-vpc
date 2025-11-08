@@ -87,7 +87,7 @@ resource "aws_default_network_acl" "nextwork_public_subnet_1" {
   }
 
   tags = {
-    Name = "NextWork Network ACL"
+    Name = "NextWork Public NACL"
   }
 }
 
@@ -111,4 +111,13 @@ resource "aws_route_table" "network_private_route_table" {
 resource "aws_route_table_association" "network_private_subnet_1_association" {
   subnet_id      = aws_subnet.network_private_subnet_1.id
   route_table_id = aws_route_table.network_private_route_table.id
+}
+
+resource "aws_network_acl" "nextwork_private_subnet_NACL" {
+  vpc_id     = aws_vpc.nextwork_vpc.id
+  subnet_ids = [aws_subnet.network_private_subnet_1.id]
+
+  tags = {
+    Name = "NextWork Private NACL"
+  }
 }
