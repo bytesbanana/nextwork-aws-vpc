@@ -1,29 +1,40 @@
+terraform {
+  required_version = ">= 1.0.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.20"
+    }
+  }
+}
+
 provider "aws" {
-  region = "ap-southeast-1"
+  region = var.region
 }
 
 resource "aws_vpc" "nextwork_vpc" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = var.vpc_cidr
 
   tags = {
-    Name = "NextWork VPC"
+    Name = "${var.resource_prefix} VPC"
   }
 }
 
 resource "aws_subnet" "nextwork_public_subnet_1" {
   vpc_id                  = aws_vpc.nextwork_vpc.id
-  cidr_block              = "10.0.0.0/24"
+  cidr_block              = var.public_subnet_cidr
   map_public_ip_on_launch = true
 
   tags = {
-    Name : "NextWork Public Subnet"
+    Name = "${var.resource_prefix} Public Subnet"
   }
 }
 
 resource "aws_internet_gateway" "nextwork_ig" {
   vpc_id = aws_vpc.nextwork_vpc.id
   tags = {
-    Name : "NextWork IG"
+    Name = "${var.resource_prefix} IG"
   }
 }
 
@@ -38,7 +49,7 @@ resource "aws_default_route_table" "nextwork_vpc" {
   }
 
   tags = {
-    Name = "NextWork Public Route table"
+    Name = "${var.resource_prefix} Public Route table"
   }
 }
 
@@ -48,12 +59,12 @@ resource "aws_route_table_association" "nextwork_public_subnet_1_association" {
 }
 
 resource "aws_security_group" "nextwork_public_security_group" {
-  name        = "NextWork Public Security Group"
+  name        = var.security_group_name
   vpc_id      = aws_vpc.nextwork_vpc.id
-  description = "A Security Group for the NextWork VPC Public Subnet"
+  description = "A Security Group for the ${var.resource_prefix} VPC Public Subnet"
 
   tags = {
-    Name = "NextWork Public Security Group"
+    Name = var.security_group_name
   }
 }
 
@@ -61,8 +72,8 @@ resource "aws_vpc_security_group_ingress_rule" "allow_http_ipv4_from_anywhere" {
   security_group_id = aws_security_group.nextwork_public_security_group.id
   ip_protocol       = "tcp"
   cidr_ipv4         = "0.0.0.0/0"
-  from_port         = 80
-  to_port           = 80
+  from_port         = var.http_port
+  to_port           = var.http_port
 }
 
 resource "aws_default_network_acl" "nextwork_public_subnet_1" {
@@ -93,10 +104,10 @@ resource "aws_default_network_acl" "nextwork_public_subnet_1" {
 
 resource "aws_subnet" "network_private_subnet_1" {
   vpc_id     = aws_vpc.nextwork_vpc.id
-  cidr_block = "10.0.1.0/24"
+  cidr_block = var.private_subnet_cidr
 
   tags = {
-    Name = "NextWork Private Subnet"
+    Name = "${var.resource_prefix} Private Subnet"
   }
 }
 
@@ -145,38 +156,36 @@ resource "aws_key_pair" "ec2_key_pair" {
 
 resource "aws_instance" "nextwork_public_server" {
   ami                         = data.aws_ami.amazon_linux_2.id
-  instance_type               = "t3.micro"
+  instance_type               = var.instance_type
   key_name                    = aws_key_pair.ec2_key_pair.key_name
   vpc_security_group_ids      = [aws_security_group.nextwork_public_security_group.id]
   subnet_id                   = aws_subnet.nextwork_public_subnet_1.id
   associate_public_ip_address = true
 
-
   tags = {
-    Name = "NextWork Public Server"
+    Name = "${var.resource_prefix} Public Server"
   }
 }
 
 resource "aws_security_group" "nextwork_private_security_group" {
-  name        = "NextWork Private Security Group"
+  name        = "${var.resource_prefix} Private Security Group"
   vpc_id      = aws_vpc.nextwork_vpc.id
-  description = "Security group for NextWork Private Subnet."
+  description = "Security group for ${var.resource_prefix} Private Subnet"
 
   tags = {
-    Name = "NextWork Private Security Group"
+    Name = "${var.resource_prefix} Private Security Group"
   }
-
 }
 
 resource "aws_instance" "nextwork_private_server" {
   ami                    = data.aws_ami.amazon_linux_2.id
-  instance_type          = "t3.micro"
+  instance_type          = var.instance_type
   key_name               = aws_key_pair.ec2_key_pair.key_name
   vpc_security_group_ids = [aws_security_group.nextwork_private_security_group.id]
   subnet_id              = aws_subnet.network_private_subnet_1.id
 
   tags = {
-    Name = "NextWork Private Server"
+    Name = "${var.resource_prefix} Private Server"
   }
 }
 
